@@ -1,0 +1,8 @@
+config ADXL343
+	bool "ADXL343 3-axis accelerometer"
+	default y
+	depends on DT_HAS_ADI_ADXL343_ENABLED
+	depends on SENSOR
+	select I2C
+	help
+	  Driver for the Analog Devices ADXL343 accelerometer on I2C.

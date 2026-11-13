@@ -9,6 +9,7 @@
 / {
 	aliases {
 		/delete-property/ sw0;
+		accel0 = &adxl343;
 	};
 
 	zephyr,user {
@@ -28,5 +29,18 @@
 		status = "okay";
 		pinctrl-0 = <&tim2_ch1_pa0>;
 		pinctrl-names = "default";
+	};
+};
+
+/*
+ * ADXL343 accelerometer on the Arduino-header I2C bus (I2C2, 400 kHz):
+ * SDA = D14 (PA11), SCL = D15 (PA12). SDO/ALT ADDRESS low selects 0x53.
+ */
+&arduino_i2c {
+	adxl343: adxl343@53 {
+		compatible = "adi,adxl343";
+		reg = <0x53>;
+		range = <2>;
+		odr = <100>;
 	};
 };

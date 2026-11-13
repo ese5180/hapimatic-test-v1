@@ -1,0 +1,5 @@
+menu "Project drivers"
+
+rsource "sensor/adxl343/Kconfig"
+
+endmenu

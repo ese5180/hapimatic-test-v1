@@ -5,8 +5,9 @@ Cortex-M0+, sub-GHz LoRa radio). Zephyr board target: `nucleo_wl55jc`.
 
 ## Layout
 
-This repo is a self-contained west workspace. `app/` is both the application
-and the west manifest; everything else west fetches is git-ignored.
+This repo is a self-contained west workspace. `app/` is the application, the
+west manifest, and a Zephyr module that provides this project's drivers;
+everything else west fetches is git-ignored.
 
 ```
 .
@@ -14,8 +15,11 @@ and the west manifest; everything else west fetches is git-ignored.
 │   ├── west.yml         # pins Zephyr v4.5.0 + the modules used
 │   ├── CMakeLists.txt   # board default, OpenOCD flashing setup
 │   ├── prj.conf         # Kconfig options
-│   ├── boards/nucleo_wl55jc.overlay   # devicetree: PWM on PA0
-│   └── src/main.c
+│   ├── boards/nucleo_wl55jc.overlay   # devicetree: PWM on PA0, ADXL343 on I2C2
+│   ├── src/main.c
+│   ├── zephyr/module.yml              # registers drivers/ and dts/ with Zephyr
+│   ├── drivers/sensor/adxl343/        # ADXL343 sensor driver
+│   └── dts/bindings/sensor/adi,adxl343.yaml
 ├── zephyr/  modules/    # fetched by `west update` (ignored)
 ├── .west/   .venv/      # workspace config, Python env (ignored)
 └── build/               # build output (ignored)
@@ -80,7 +84,31 @@ west zephyr-export
   devicetree, and pressing B1 while the output runs shorts PA0 to GND.
   The frequency comes from the internal 16 MHz HSI oscillator, which drifts
   slightly with temperature.
-- **Green LED2** blinks at 1 Hz and the console prints a tick every 500 ms.
+- **Green LED2** blinks at 1 Hz.
+
+## ADXL343 accelerometer
+
+Polled over I2C2 (400 kHz) at address `0x53`; the console prints all three
+axes in milli-g at 10 Hz: `accel 12: x=-824 y=-195 z=-589 mg`.
+
+| ADXL343 | NUCLEO-WL55JC |
+|---|---|
+| SCL | CN10 pin 3 (PA12, Arduino D15) |
+| SDA | CN10 pin 5 (PA11, Arduino D14) |
+| VIN | CN7 pin 16 (3V3) |
+| GND | GND |
+| CS | 3V3 (selects I2C; low or floating = SPI mode) |
+| SDO / ALT ADDR | GND (`0x53`; 3V3 gives `0x1D`, change `reg` in the overlay) |
+
+The driver (`app/drivers/sensor/adxl343/`) implements the Zephyr sensor API:
+`sensor_sample_fetch()` reads all axes in one burst, `sensor_channel_get()`
+returns `SENSOR_CHAN_ACCEL_X/Y/Z/XYZ` in m/s^2. It runs in full-resolution
+mode (3.9 mg/LSB at every range). Range (`range`: 2/4/8/16 g) and output data
+rate (`odr`: 25..3200 Hz) are set in the overlay node. `CONFIG_ADXL343` is
+enabled automatically when the node is present.
+
+If the console shows `ADXL343 not ready`, the chip did not ACK at boot: check
+power, CS high, and SDA/SCL, then reset.
 
 ## Board notes
 

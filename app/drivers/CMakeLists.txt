@@ -1,0 +1,1 @@
+add_subdirectory_ifdef(CONFIG_ADXL343 sensor/adxl343)
