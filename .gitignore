@@ -1,0 +1,12 @@
+# West workspace (fetched by `west update`, pinned by app/west.yml)
+/.west/
+/zephyr/
+/modules/
+/bootloader/
+/tools/
+
+# Python virtual environment
+/.venv/
+
+# Build output
+build/
