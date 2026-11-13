@@ -77,7 +77,7 @@ west zephyr-export
 ## Outputs
 
 - **PA0: 20 kHz square wave, 50 % duty.** TIM2 channel 1 in PWM mode,
-  generated in hardware (48 MHz timer clock, period = 2400 counts). Change the
+  generated in hardware (16 MHz timer clock, period = 800 counts). Change the
   frequency in `app/boards/nucleo_wl55jc.overlay` (`PWM_KHZ(20)`). PA0 is on
   the right-hand morpho header, pin 1.
   **PA0 is shared with user button B1**: the overlay removes the button from
@@ -109,6 +109,36 @@ enabled automatically when the node is present.
 
 If the console shows `ADXL343 not ready`, the chip did not ACK at boot: check
 power, CS high, and SDA/SCL, then reset.
+
+## Power
+
+The system clock runs directly from the 16 MHz HSI with the PLL off (the board
+default is 48 MHz from the PLL); see the `&rcc`/`&pll` nodes in the overlay.
+All features run unchanged. Measured STM32WL current (PPK2 across JP1, 20 s):
+
+| | 48 MHz | 16 MHz |
+|---|---|---|
+| Average | 6.79 mA | 4.68 mA (-31 %) |
+| LED2 off | 4.56 mA | 2.39 mA |
+| LED2 on | 8.75 mA | 6.91 mA |
+
+LED2 accounts for about 4.3 mA while lit. The sensor is powered from the board
+3V3 rail and is not included.
+
+### Measuring with the Nordic PPK2
+
+Nordic's Power Profiler app has no ARM Linux build; `GeneratedFiles/ppk2/ppk2.py`
+drives the PPK2 from the venv (`pip install ppk2-api`):
+
+```sh
+python GeneratedFiles/ppk2/ppk2.py measure 20   # power the MCU, measure 20 s
+python GeneratedFiles/ppk2/ppk2.py hold         # keep it powered, e.g. to flash
+```
+
+Wiring: remove JP1; PPK2 VIN to the JP1 pin on the board 3V3 side, VOUT to
+the MCU side, GND to GND. **With JP1 removed the MCU is powered only while
+the PPK2 passes current**, and the PPK2 cuts that when its port closes, so run
+`hold` in another terminal while flashing or debugging, or refit JP1.
 
 ## Board notes
 

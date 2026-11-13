@@ -20,9 +20,23 @@
 
 /delete-node/ &user_button_1;
 
+/*
+ * Power: run SYSCLK straight from the 16 MHz HSI with the PLL off (board
+ * default is HSI -> PLL at 48 MHz). Peripheral timings (TIM2, I2C2, LPUART1)
+ * and flash wait states are derived from the clock tree by Zephyr.
+ */
+&pll {
+	status = "disabled";
+};
+
+&rcc {
+	clocks = <&clk_hsi>;
+	clock-frequency = <DT_FREQ_M(16)>;
+};
+
 &timers2 {
 	status = "okay";
-	/* 48 MHz timer clock, no prescaler: 20 kHz period = 2400 counts */
+	/* 16 MHz timer clock, no prescaler: 20 kHz period = 800 counts */
 	st,prescaler = <0>;
 
 	pwm2: pwm {
