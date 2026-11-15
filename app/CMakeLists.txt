@@ -9,7 +9,7 @@ set(BOARD_FLASH_RUNNER openocd)
 set(BOARD_DEBUG_RUNNER openocd)
 
 # Hold the MCU in reset while OpenOCD connects when flashing. Firmware that
-# enters Stop/Standby (stock ST demo, or ours once CONFIG_PM is on) disables
+# enters Stop/Standby (stock ST demo, or this app with CONFIG_PM) disables
 # SWD, so a plain connect fails with "unable to connect to the target".
 # Applies to `west flash` only; `west debug`/`attach` keep the default.
 # Must be defined before find_package(Zephyr), which invokes it once per
@@ -26,4 +26,4 @@ endmacro()
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(app)
 
-target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/main.c src/power.c)

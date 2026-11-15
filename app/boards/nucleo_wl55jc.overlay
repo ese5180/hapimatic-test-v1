@@ -1,29 +1,13 @@
-#include <zephyr/dt-bindings/pwm/pwm.h>
-
-/*
- * PA0 is shared with user button B1 on this board. It is used here as the
- * TIM2_CH1 PWM output, so the button is removed from devicetree to keep any
- * driver (e.g. gpio-keys with CONFIG_INPUT) from claiming the pin.
- * Do not press B1 while the output is running: it shorts PA0 to GND.
- */
 / {
 	aliases {
-		/delete-property/ sw0;
 		accel0 = &adxl343;
-	};
-
-	zephyr,user {
-		/* TIM2 channel 1 on PA0: 20 kHz, 50 % duty set in main.c */
-		pwms = <&pwm2 1 PWM_KHZ(20) PWM_POLARITY_NORMAL>;
 	};
 };
 
-/delete-node/ &user_button_1;
-
 /*
  * Power: run SYSCLK straight from the 16 MHz HSI with the PLL off (board
- * default is HSI -> PLL at 48 MHz). Peripheral timings (TIM2, I2C2, LPUART1)
- * and flash wait states are derived from the clock tree by Zephyr.
+ * default is HSI -> PLL at 48 MHz). Peripheral timings (I2C2, LPUART1) and
+ * flash wait states are derived from the clock tree by Zephyr.
  */
 &pll {
 	status = "disabled";
@@ -34,16 +18,13 @@
 	clock-frequency = <DT_FREQ_M(16)>;
 };
 
-&timers2 {
-	status = "okay";
-	/* 16 MHz timer clock, no prescaler: 20 kHz period = 800 counts */
-	st,prescaler = <0>;
-
-	pwm2: pwm {
-		status = "okay";
-		pinctrl-0 = <&tim2_ch1_pa0>;
-		pinctrl-names = "default";
-	};
+/*
+ * Power: limit idle to Stop0/Stop1. Measured on this board, Stop2 puts a
+ * ~32 kHz signal on PA2 (LPUART1 TX, the ST-LINK console: decoded as a
+ * stream of '6') and draws more than Stop1 (54 vs 19 uA median).
+ */
+&stop2 {
+	status = "disabled";
 };
 
 /*
